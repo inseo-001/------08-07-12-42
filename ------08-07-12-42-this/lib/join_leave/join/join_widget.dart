@@ -2542,6 +2542,7 @@ class _JoinWidgetState extends State<JoinWidget> {
                                   'parentPhone': _model.textController6?.text ?? '',
                                   'room': _model.textController7?.text ?? '',
                                   'reason': _model.textController8?.text ?? '',
+                                  'applyday': FieldValue.serverTimestamp(),
                                 });
                                 context.pushNamed(JoinCompleteWidget.routeName);
                               },
