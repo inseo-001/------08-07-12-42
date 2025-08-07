@@ -1973,8 +1973,9 @@ class _LeaveWidgetState extends State<LeaveWidget> {
                                   'studentId': _model.textController2?.text ?? '',
                                   'department': _model.textController3?.text ?? '',
                                   'grade': _model.textController4?.text ?? '',
-                                  'date': _model.textController5?.text ?? '',
+                                  'hopeday': _model.textController5?.text ?? '',
                                   'reason': _model.textController6?.text ?? '',
+                                  'applyday': FieldValue.serverTimestamp(),
                                 });
 
                                 context.pushNamed(JoinCompleteWidget.routeName);
