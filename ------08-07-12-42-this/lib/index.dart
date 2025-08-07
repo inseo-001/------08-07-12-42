@@ -35,3 +35,5 @@ export '/join_leave/bbs/b_b_s_write/b_b_s_write_widget.dart'
 export '/home_page/menu_main/menu_main_widget.dart' show MenuMainWidget;
 export '/chating/massage_detail_roommate_copy/massage_detail_roommate_copy_widget.dart'
     show MassageDetailRoommateCopyWidget;
+export '/notifications/notification_list_widget.dart'
+    show NotificationListWidget;

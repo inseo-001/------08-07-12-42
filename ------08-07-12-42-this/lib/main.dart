@@ -8,8 +8,9 @@ import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
 import 'package:floating_bottom_navigation_bar/floating_bottom_navigation_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
-import  'firebase_options.dart';
+import 'firebase_options.dart';
 import 'index.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // 알림 서비스 초기화
+  await NotificationService().initialize();
 
   await FlutterFlowTheme.initialize();
 

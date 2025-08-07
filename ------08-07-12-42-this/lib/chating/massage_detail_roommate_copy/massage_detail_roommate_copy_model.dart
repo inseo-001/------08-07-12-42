@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'chat_service.dart';
+import '../../services/notification_service.dart';
 
 class MassageDetailRoommateCopyModel
     extends FlutterFlowModel<MassageDetailRoommateCopyWidget> {
@@ -97,6 +98,8 @@ class MassageDetailRoommateCopyModel
 
       // 메시지 스트림 설정 - chats 컬렉션 사용
       try {
+        print('Firestore 연결 시도 중...');
+
         chatStream = _firestore
             .collection('chats')
             .doc(chatId)
@@ -104,11 +107,42 @@ class MassageDetailRoommateCopyModel
             .orderBy('timestamp', descending: false)
             .snapshots();
 
+        // 메시지 스트림 리스너 추가 - 관리자 메시지 수신 시 알림
+        chatStream?.listen(
+          (snapshot) {
+            print('메시지 스트림 업데이트: ${snapshot.docs.length}개 메시지');
+            for (var change in snapshot.docChanges) {
+              if (change.type == DocumentChangeType.added) {
+                var messageData = change.doc.data() as Map<String, dynamic>;
+
+                // 관리자가 보낸 메시지인지 확인
+                if (messageData['isAdmin'] == true &&
+                    messageData['senderId'] == 'admin' &&
+                    messageData['senderName'] != 'AI 어시스턴트') {
+                  // 관리자 메시지 수신 시 알림 전송
+                  _sendAdminMessageNotification(messageData);
+                }
+              }
+            }
+          },
+          onError: (error) {
+            print('Firestore 스트림 오류: $error');
+            // 네트워크 오류 시 재시도 로직
+            Future.delayed(Duration(seconds: 5), () {
+              print('Firestore 연결 재시도 중...');
+              _initializeChatStream();
+            });
+          },
+        );
+
         print('채팅 스트림 초기화 성공: $chatId');
       } catch (e) {
         print('채팅 스트림 초기화 오류: $e');
-        // 오류 발생 시 기본 메시지 사용
-        chatStream = null;
+        // 오류 발생 시 5초 후 재시도
+        Future.delayed(Duration(seconds: 5), () {
+          print('Firestore 연결 재시도 중...');
+          _initializeChatStream();
+        });
       }
     } else {
       print(
@@ -176,6 +210,9 @@ class MassageDetailRoommateCopyModel
       String chatId = _getChatId();
       print('채팅방 ID: $chatId');
 
+      // 네트워크 연결 상태 확인
+      print('Firestore 연결 확인 중...');
+
       // Firebase 인증 여부와 관계없이 Firestore에 메시지 저장
       print('Firestore에 메시지 저장 중...');
       await _firestore
@@ -206,12 +243,25 @@ class MassageDetailRoommateCopyModel
 
       print('메시지 전송 성공: $messageText');
 
+      // 새 메시지 알림 전송
+      _sendNewMessageNotification(messageText);
+
       // 챗봇인 경우 자동 응답
       if (selectedRole == 'chatbot') {
         _sendChatbotResponse(messageText);
       }
     } catch (e) {
       print('메시지 전송 오류: $e');
+
+      // 네트워크 오류인지 확인
+      if (e.toString().contains('EAI_NODATA') ||
+          e.toString().contains('network') ||
+          e.toString().contains('connection')) {
+        print('네트워크 연결 오류로 인한 메시지 전송 실패');
+        // 사용자에게 네트워크 오류 알림
+        // TODO: 사용자에게 네트워크 오류 메시지 표시
+      }
+
       // 오류 발생 시 임시 메시지 추가
       messages.add({
         'text': messageText,
@@ -221,6 +271,12 @@ class MassageDetailRoommateCopyModel
         'isAdmin': false,
       });
       print('오류로 인한 임시 메시지 추가 완료: ${messages.length}개 메시지');
+
+      // 5초 후 재시도
+      Future.delayed(Duration(seconds: 5), () {
+        print('메시지 전송 재시도 중...');
+        sendMessage();
+      });
     }
   }
 
@@ -328,6 +384,96 @@ class MassageDetailRoommateCopyModel
     } catch (e) {
       print('ChatGPT API 호출 실패: $e');
       return _generateChatbotResponse(userMessage);
+    }
+  }
+
+  // 새 메시지 알림 전송 (학생이 관리자에게 보낼 때)
+  void _sendNewMessageNotification(String messageText) async {
+    try {
+      // 관리자 타입 가져오기
+      String adminType = _getAdminType(selectedRole!);
+
+      // 알림 서비스를 통해 알림 전송
+      await NotificationService().sendChatNotification(
+        studentId: currentStudentId ?? 'unknown',
+        studentName: currentUserName ?? '학생',
+        message: messageText,
+        adminType: adminType,
+      );
+
+      // 로컬 알림도 표시
+      String title = '';
+      switch (adminType) {
+        case 'director':
+          title = '실장님';
+          break;
+        case 'supervisor':
+          title = '사감님';
+          break;
+        case 'floor_manager':
+          title = '층장님';
+          break;
+        default:
+          title = '관리자';
+      }
+
+      await NotificationService().showLocalNotification(
+        title: '$title에게 메시지 전송',
+        body: messageText.length > 50
+            ? '${messageText.substring(0, 50)}...'
+            : messageText,
+        payload: 'chat_${currentStudentId}_$adminType',
+      );
+
+      print('새 메시지 알림 전송 완료');
+    } catch (e) {
+      print('새 메시지 알림 전송 오류: $e');
+    }
+  }
+
+  // 관리자 메시지 수신 시 알림 전송
+  void _sendAdminMessageNotification(Map<String, dynamic> messageData) async {
+    try {
+      String messageText = messageData['text'] ?? '';
+      String adminName = messageData['senderName'] ?? '관리자';
+      String adminType = _getAdminType(selectedRole!);
+
+      // 관리자 메시지 수신 알림을 Firestore에 저장
+      await NotificationService().sendAdminMessageNotification(
+        studentId: currentStudentId ?? 'unknown',
+        studentName: currentUserName ?? '학생',
+        message: messageText,
+        adminName: adminName,
+        adminType: adminType,
+      );
+
+      // 로컬 알림 표시
+      String title = '';
+      switch (adminType) {
+        case 'director':
+          title = '실장님';
+          break;
+        case 'supervisor':
+          title = '사감님';
+          break;
+        case 'floor_manager':
+          title = '층장님';
+          break;
+        default:
+          title = '관리자';
+      }
+
+      await NotificationService().showLocalNotification(
+        title: '$title으로부터 메시지',
+        body: messageText.length > 50
+            ? '${messageText.substring(0, 50)}...'
+            : messageText,
+        payload: 'admin_chat_${currentStudentId}_$adminType',
+      );
+
+      print('관리자 메시지 알림 전송 완료');
+    } catch (e) {
+      print('관리자 메시지 알림 전송 오류: $e');
     }
   }
 

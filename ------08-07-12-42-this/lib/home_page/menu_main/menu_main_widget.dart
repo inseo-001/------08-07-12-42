@@ -824,7 +824,7 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                             highlightColor: Colors.transparent,
                             onTap: () async {
                               context.pushNamed(LeaveWidget.routeName);
-                            },//수정함
+                            }, //수정함
                             child: Container(
                               width: 249.8,
                               height: 55.0,
@@ -1095,6 +1095,118 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                                       65.0, 0.0, 0.0, 0.0),
                                   child: Text(
                                     '민원 서비스 · 메세지',
+                                    style: FlutterFlowTheme.of(context)
+                                        .labelSmall
+                                        .override(
+                                          font: GoogleFonts.inter(
+                                            fontWeight:
+                                                FlutterFlowTheme.of(context)
+                                                    .labelSmall
+                                                    .fontWeight,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .labelSmall
+                                                    .fontStyle,
+                                          ),
+                                          letterSpacing: 0.0,
+                                          fontWeight:
+                                              FlutterFlowTheme.of(context)
+                                                  .labelSmall
+                                                  .fontWeight,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .labelSmall
+                                                  .fontStyle,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Padding(
+                    padding:
+                        EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Padding(
+                          padding: EdgeInsetsDirectional.fromSTEB(
+                              40.0, 0.0, 0.0, 0.0),
+                          child: Container(
+                            width: 55.0,
+                            height: 55.0,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFF5F6F7),
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: Icon(
+                              Icons.notifications,
+                              color: Color(0xFFFF6B6B),
+                              size: 24.0,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          splashColor: Colors.transparent,
+                          focusColor: Colors.transparent,
+                          hoverColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap: () async {
+                            context.pushNamed('notificationList');
+                          },
+                          child: Container(
+                            width: 249.8,
+                            height: 55.0,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      20.0, 0.0, 0.0, 0.0),
+                                  child: Text(
+                                    '알림',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyLarge
+                                        .override(
+                                          font: GoogleFonts.inter(
+                                            fontWeight:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyLarge
+                                                    .fontWeight,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyLarge
+                                                    .fontStyle,
+                                          ),
+                                          letterSpacing: 0.0,
+                                          fontWeight:
+                                              FlutterFlowTheme.of(context)
+                                                  .bodyLarge
+                                                  .fontWeight,
+                                          fontStyle:
+                                              FlutterFlowTheme.of(context)
+                                                  .bodyLarge
+                                                  .fontStyle,
+                                        ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      65.0, 0.0, 0.0, 0.0),
+                                  child: Text(
+                                    '새 메시지 알림',
                                     style: FlutterFlowTheme.of(context)
                                         .labelSmall
                                         .override(

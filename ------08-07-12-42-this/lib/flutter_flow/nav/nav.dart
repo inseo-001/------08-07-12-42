@@ -191,6 +191,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: MassageDetailRoommateCopyWidget.routeName,
           path: MassageDetailRoommateCopyWidget.routePath,
           builder: (context, params) => MassageDetailRoommateCopyWidget(),
+        ),
+        FFRoute(
+          name: 'notificationList',
+          path: '/notifications',
+          builder: (context, params) => NotificationListWidget(),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
