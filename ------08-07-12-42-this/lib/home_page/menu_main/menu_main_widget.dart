@@ -841,7 +841,7 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                                       padding:
                                       EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
                                       child: Text(
-                                        '기숙사 퇴사 신청',
+                                        '기숙사 퇴사 신청', //아 시발 왜 안되는거야
                                         style: FlutterFlowTheme.of(context).bodyLarge,
                                       ),
                                     ),
