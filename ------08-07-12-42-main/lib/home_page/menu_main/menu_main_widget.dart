@@ -824,7 +824,7 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                             highlightColor: Colors.transparent,
                             onTap: () async {
                               context.pushNamed(LeaveWidget.routeName);
-                            },
+                            },//이부분 수정했습니다.
                             child: Container(
                               width: 249.8,
                               height: 55.0,
