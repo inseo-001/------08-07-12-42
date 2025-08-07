@@ -8,6 +8,7 @@ import 'flutter_flow/flutter_flow_util.dart';
 import 'flutter_flow/internationalization.dart';
 import 'package:floating_bottom_navigation_bar/floating_bottom_navigation_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'index.dart';
 
 void main() async {
@@ -16,7 +17,9 @@ void main() async {
   usePathUrlStrategy();
 
   // Firebase 초기화
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await FlutterFlowTheme.initialize();
 
