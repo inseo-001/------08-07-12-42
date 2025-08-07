@@ -6,6 +6,7 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'join_model.dart';
 export 'join_model.dart';
 
@@ -2532,6 +2533,16 @@ class _JoinWidgetState extends State<JoinWidget> {
                                 0.0, 5.0, 0.0, 0.0),
                             child: FFButtonWidget(
                               onPressed: () async {
+                                await FirebaseFirestore.instance.collection('users_join').add({
+                                  'name': _model.textController1?.text ?? '',
+                                  'studentId': _model.textController2?.text ?? '',
+                                  'department': _model.textController3?.text ?? '',
+                                  'grade': _model.textController4?.text ?? '',
+                                  'studentPhone': _model.textController5?.text ?? '',
+                                  'parentPhone': _model.textController6?.text ?? '',
+                                  'room': _model.textController7?.text ?? '',
+                                  'reason': _model.textController8?.text ?? '',
+                                });
                                 context.pushNamed(JoinCompleteWidget.routeName);
                               },
                               text: '입사 신청하기',

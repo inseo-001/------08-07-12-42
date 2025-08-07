@@ -95,7 +95,7 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                           buttonSize: 40.0,
                           fillColor: FlutterFlowTheme.of(context).info,
                           icon: FaIcon(
-                            FontAwesomeIcons.search,
+                            FontAwesomeIcons.magnifyingGlass,
                             size: 24.0,
                           ),
                           onPressed: () {
@@ -783,27 +783,26 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                   ),
                 ],
               ),
-              // … 앞에 위치한 입사 신청 섹션은 그대로 두고,…
-
-// 퇴사 신청 섹션
               Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                    padding:
+                        EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
                     child: InkWell(
                       splashColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
                       highlightColor: Colors.transparent,
-                      onTap: () {
-                        // 바깥 InkWell: 퇴사 페이지로 이동
+                      onTap: () async {
                         context.pushNamed(LeaveWidget.routeName);
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          // 아이콘 영역
                           Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(40.0, 0.0, 0.0, 0.0),
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                                40.0, 0.0, 0.0, 0.0),
                             child: Container(
                               width: 55.0,
                               height: 55.0,
@@ -818,43 +817,84 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                               ),
                             ),
                           ),
-                          // 텍스트 영역만 별도 InkWell로 감싸기
                           InkWell(
                             splashColor: Colors.transparent,
+                            focusColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
-                            onTap: () {
-                              // 안쪽 InkWell: 동일하게 퇴사 페이지로 이동
+                            onTap: () async {
                               context.pushNamed(LeaveWidget.routeName);
-                            },
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 0.0, 0.0),
-                              child: Container(
-                                width: 249.8,
-                                height: 55.0,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).info,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding:
-                                      EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                                      child: Text(
-                                        '기숙사 퇴사 신청', //아 시발 왜 안되는거야
-                                        style: FlutterFlowTheme.of(context).bodyLarge,
-                                      ),
+                            },//수정함
+                            child: Container(
+                              width: 249.8,
+                              height: 55.0,
+                              decoration: BoxDecoration(
+                                color: FlutterFlowTheme.of(context).info,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        20.0, 0.0, 0.0, 0.0),
+                                    child: Text(
+                                      '기숙사 퇴사 신청',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyLarge
+                                          .override(
+                                            font: GoogleFonts.inter(
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyLarge
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyLarge
+                                                      .fontStyle,
+                                            ),
+                                            letterSpacing: 0.0,
+                                            fontWeight:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyLarge
+                                                    .fontWeight,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyLarge
+                                                    .fontStyle,
+                                          ),
                                     ),
-                                    Padding(
-                                      padding:
-                                      EdgeInsetsDirectional.fromSTEB(60.0, 0.0, 0.0, 0.0),
-                                      child: Text(
-                                        '기숙사 신청',
-                                        style: FlutterFlowTheme.of(context).labelSmall,
-                                      ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        60.0, 0.0, 0.0, 0.0),
+                                    child: Text(
+                                      '기숙사 신청',
+                                      style: FlutterFlowTheme.of(context)
+                                          .labelSmall
+                                          .override(
+                                            font: GoogleFonts.inter(
+                                              fontWeight:
+                                                  FlutterFlowTheme.of(context)
+                                                      .labelSmall
+                                                      .fontWeight,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .labelSmall
+                                                      .fontStyle,
+                                            ),
+                                            letterSpacing: 0.0,
+                                            fontWeight:
+                                                FlutterFlowTheme.of(context)
+                                                    .labelSmall
+                                                    .fontWeight,
+                                            fontStyle:
+                                                FlutterFlowTheme.of(context)
+                                                    .labelSmall
+                                                    .fontStyle,
+                                          ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -864,7 +904,6 @@ class _MenuMainWidgetState extends State<MenuMainWidget> {
                   ),
                 ],
               ),
-
               Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [

@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'leave_model.dart';
 export 'leave_model.dart';
 
@@ -1967,9 +1968,18 @@ class _LeaveWidgetState extends State<LeaveWidget> {
                                 0.0, 5.0, 0.0, 0.0),
                             child: FFButtonWidget(
                               onPressed: () async {
+                                await FirebaseFirestore.instance.collection('users_leave').add({
+                                  'name': _model.textController1?.text ?? '',
+                                  'studentId': _model.textController2?.text ?? '',
+                                  'department': _model.textController3?.text ?? '',
+                                  'grade': _model.textController4?.text ?? '',
+                                  'date': _model.textController5?.text ?? '',
+                                  'reason': _model.textController6?.text ?? '',
+                                });
+
                                 context.pushNamed(JoinCompleteWidget.routeName);
                               },
-                              text: '입사 신청하기',
+                              text: '퇴사 신청하기',
                               options: FFButtonOptions(
                                 height: 64.5,
                                 padding: EdgeInsetsDirectional.fromSTEB(
