@@ -1218,7 +1218,6 @@
                   <th>학과</th>
                   <th>학년</th>
                   <th>본인 연락처</th>
-                  <th>희망 입사일</th>
                   <th>신청일</th>
                   <th>상태</th>
                 </tr>
@@ -1226,12 +1225,11 @@
               <tbody>
                 <tr>
                   <td><input type="checkbox" class="in-row-check"></td>
-                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('김영수', '20240801', '컴퓨터공학과', '1학년', '010-1234-5678', '2024-03-01', '2024-02-15')">김영수</td>
+                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('김영수', '20240801', '컴퓨터공학과', '1학년', '010-1234-5678', '2024-02-15')">김영수</td>
                   <td>20240801</td>
                   <td>컴퓨터공학과</td>
                   <td>1학년</td>
                   <td>010-1234-5678</td>
-                  <td>2024-03-01</td>
                   <td>2024-02-15</td>
                   <td>
                     <select class="in-status-select" style='border-radius:12px;padding:4px 12px;font-size:1em;background:#ffb300;color:#fff;font-weight:600;border:none;'>
@@ -1243,35 +1241,33 @@
                 </tr>
                 <tr>
                   <td><input type="checkbox" class="in-row-check"></td>
-                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('이미영', '20240802', '경영학과', '2학년', '010-2345-6789', '2024-03-05', '2024-02-18')">이미영</td>
+                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('이미영', '20240802', '경영학과', '2학년', '010-2345-6789', '2024-02-18')">이미영</td>
                   <td>20240802</td>
                   <td>경영학과</td>
                   <td>2학년</td>
                   <td>010-2345-6789</td>
-                  <td>2024-03-05</td>
                   <td>2024-02-18</td>
                   <td>
-                    <select class="in-status-select" style='border-radius:12px;padding:4px 12px;font-size:1em;background:#43a047;color:#fff;font-weight:600;border:none;'>
-                      <option value='승인' selected>승인</option>
-                      <option value='대기'>대기</option>
+                    <select class="in-status-select" style='border-radius:12px;padding:4px 12px;font-size:1em;background:#ffb300;color:#fff;font-weight:600;border:none;'>
+                      <option value='승인'>승인</option>
+                      <option value='대기' selected>대기</option>
                       <option value='반려'>반려</option>
                     </select>
                   </td>
                 </tr>
                 <tr>
                   <td><input type="checkbox" class="in-row-check"></td>
-                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('박준호', '20240803', '전자공학과', '1학년', '010-3456-7890', '2024-03-10', '2024-02-20')">박준호</td>
+                  <td style="cursor:pointer;color:#1976d2;text-decoration:underline;" onclick="showInDetail('박준호', '20240803', '전자공학과', '1학년', '010-3456-7890', '2024-02-20')">박준호</td>
                   <td>20240803</td>
                   <td>전자공학과</td>
                   <td>1학년</td>
                   <td>010-3456-7890</td>
-                  <td>2024-03-10</td>
                   <td>2024-02-20</td>
                   <td>
-                    <select class="in-status-select" style='border-radius:12px;padding:4px 12px;font-size:1em;background:#d32f2f;color:#fff;font-weight:600;border:none;'>
+                    <select class="in-status-select" style='border-radius:12px;padding:4px 12px;font-size:1em;background:#ffb300;color:#fff;font-weight:600;border:none;'>
                       <option value='승인'>승인</option>
-                      <option value='대기'>대기</option>
-                      <option value='반려' selected>반려</option>
+                      <option value='대기' selected>대기</option>
+                      <option value='반려'>반려</option>
                     </select>
                   </td>
                 </tr>
@@ -3098,7 +3094,7 @@
     }
     
     // 입사 신청 상세보기 함수
-    function showInDetail(name, studentId, major, grade, phone, desiredDate, applyDate) {
+    function showInDetail(name, studentId, major, grade, phone, applyDate) {
       var modalHtml = `
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000;">
           <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
@@ -3115,7 +3111,6 @@
                   <div><strong>학과:</strong> ${major}</div>
                   <div><strong>학년:</strong> ${grade}</div>
                   <div><strong>연락처:</strong> ${phone}</div>
-                  <div><strong>희망 입사일:</strong> ${desiredDate}</div>
                   <div><strong>신청일:</strong> ${applyDate}</div>
                 </div>
               </div>
@@ -3183,6 +3178,89 @@
         updateInSelectColor(sel);
         sel.onchange = function() { updateInSelectColor(this); };
       });
+    }
+    // 입사 신청 관리 체크박스 전체 선택
+    var checkAllIn = document.getElementById('check-all-in');
+    if (checkAllIn) {
+      checkAllIn.onclick = function() {
+        var checks = document.querySelectorAll('.in-row-check');
+        checks.forEach(function(chk) { chk.checked = checkAllIn.checked; });
+      };
+    }
+    // 입사 신청 확인하기 버튼 이벤트
+    var inConfirmBtn = document.getElementById('in-confirm-btn');
+    if (inConfirmBtn) {
+      inConfirmBtn.onclick = function() {
+        var rows = document.querySelectorAll('#dorm-in-table tbody tr');
+        var result = [];
+        var hasChanges = false;
+        var checkedRows = [];
+        
+        // 체크된 행들 수집
+        rows.forEach(function(row) {
+          var checked = row.querySelector('.in-row-check').checked;
+          if (checked) {
+            checkedRows.push(row);
+          }
+        });
+        
+        // 체크된 행들의 상태를 일괄 변경할 수 있는 옵션 제공
+        if (checkedRows.length > 0) {
+          var newStatus = prompt('선택된 입사 신청들의 상태를 변경하시겠습니까?\n\n1: 승인\n2: 대기\n3: 반려\n\n번호를 입력하세요 (취소하려면 취소를 누르세요):');
+          
+          if (newStatus !== null) {
+            var statusMap = {'1': '승인', '2': '대기', '3': '반려'};
+            var selectedStatus = statusMap[newStatus];
+            
+            if (selectedStatus) {
+              checkedRows.forEach(function(row) {
+                var name = row.children[1].textContent;
+                var select = row.querySelector('.in-status-select');
+                select.value = selectedStatus;
+                updateInSelectColor(select);
+                // 초기 상태 업데이트
+                select.setAttribute('data-original-status', selectedStatus);
+                result.push(name + ': ' + selectedStatus);
+              });
+              
+              alert('일괄 변경 완료:\n' + result.join('\n'));
+            } else {
+              alert('잘못된 번호입니다. 1, 2, 3 중에서 선택해주세요.');
+            }
+          }
+        } else {
+          // 체크되지 않은 경우 기존 로직 (개별 상태 변경 확인)
+          rows.forEach(function(row) {
+            var name = row.children[1].textContent;
+            var status = row.querySelector('.in-status-select').value;
+            var originalStatus = row.querySelector('.in-status-select').getAttribute('data-original-status');
+            
+            if (originalStatus && originalStatus !== status) {
+              hasChanges = true;
+              result.push(name + ': ' + status);
+            }
+          });
+          
+          if (hasChanges) {
+            alert('적용 대상:\n' + result.join('\n'));
+            // 변경된 상태들을 초기 상태로 업데이트
+            rows.forEach(function(row) {
+              var select = row.querySelector('.in-status-select');
+              var originalStatus = select.getAttribute('data-original-status');
+              var currentStatus = select.value;
+              if (originalStatus && originalStatus !== currentStatus) {
+                select.setAttribute('data-original-status', currentStatus);
+              }
+            });
+          }
+        }
+        
+        // 체크박스 모두 해제
+        var checks = document.querySelectorAll('.in-row-check');
+        checks.forEach(function(chk) { chk.checked = false; });
+        var checkAll = document.getElementById('check-all-in');
+        if (checkAll) checkAll.checked = false;
+      };
     }
     // 상벌점 관리 체크박스 전체 선택
     var checkAllPoint = document.getElementById('check-all-point');
