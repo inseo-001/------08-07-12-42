@@ -10,7 +10,8 @@ import 'package:floating_bottom_navigation_bar/floating_bottom_navigation_bar.da
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'index.dart';
-import 'services/notification_service.dart';
+import 'services/simple_notification_service.dart';
+import 'services/global_message_listener.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +23,16 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 알림 서비스 초기화
-  await NotificationService().initialize();
+  // 간단한 알림 서비스 초기화
+  await SimpleNotificationService().initialize();
+
+  // Android 13+ 알림 권한 요청
+  bool permissionGranted =
+      await SimpleNotificationService().requestPermissions();
+  print('🔔 알림 권한 상태: ${permissionGranted ? '허용됨' : '거부됨'}');
+
+  // 글로벌 메시지 리스너 초기화
+  await GlobalMessageListener().initialize();
 
   await FlutterFlowTheme.initialize();
 

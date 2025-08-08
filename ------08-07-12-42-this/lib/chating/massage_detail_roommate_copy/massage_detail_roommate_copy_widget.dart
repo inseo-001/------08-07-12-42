@@ -9,6 +9,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'massage_detail_roommate_copy_model.dart';
 export 'massage_detail_roommate_copy_model.dart';
 
+import '../../services/notification_service.dart';
+import '../../services/global_message_listener.dart';
+
 class MassageDetailRoommateCopyWidget extends StatefulWidget {
   const MassageDetailRoommateCopyWidget({super.key});
 
@@ -44,8 +47,17 @@ class _MassageDetailRoommateCopyWidgetState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uri = GoRouterState.of(context).uri;
       final role = uri.queryParameters['role'];
+      final studentId = uri.queryParameters['studentId'];
+
       if (role != null) {
         _model.setRoleFromParameter(role);
+
+        // 현재 채팅방 상태를 알림 서비스에 설정
+        NotificationService()
+            .setCurrentChatRoom(role, studentId ?? _model.currentStudentId);
+        print(
+            '🔔 채팅방 진입: $role, 학생ID: ${studentId ?? _model.currentStudentId}');
+
         setState(() {});
       }
 
@@ -84,9 +96,22 @@ class _MassageDetailRoommateCopyWidgetState
 
   @override
   void dispose() {
+    // 채팅방 나가기 시 현재 채팅방 상태 해제
+    NotificationService().setCurrentChatRoom(null, null);
+    print('🔔 채팅방 나가기: 알림 상태 해제');
+
+    // 글로벌 메시지 리스너 재시작 (현재 채팅방 리스너)
+    if (_model.selectedRole != null && _model.currentStudentId != null) {
+      String adminType = _model.getAdminType(_model.selectedRole!);
+      String chatId = 'chat_${_model.currentStudentId}_$adminType';
+      GlobalMessageListener().resumeChatListener(chatId);
+      print('🔔 글로벌 리스너 재시작: $chatId');
+    }
+
     _model.dispose();
     _scrollController.dispose();
     _textFieldFocusNode.dispose();
+    print('🔔 채팅 위젯 dispose');
     super.dispose();
   }
 
@@ -118,19 +143,6 @@ class _MassageDetailRoommateCopyWidgetState
         } else {
           _scrollToBottom();
         }
-      }
-    });
-  }
-
-  // 강제로 스크롤을 맨 아래로 이동 (답변 로딩 완료 후)
-  void _forceScrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0, // reverse 모드에서는 0이 최신 메시지
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
       }
     });
   }

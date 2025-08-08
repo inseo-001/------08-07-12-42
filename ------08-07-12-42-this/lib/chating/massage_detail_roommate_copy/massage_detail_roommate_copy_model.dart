@@ -5,10 +5,10 @@ import 'massage_detail_roommate_copy_widget.dart'
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
 import 'chat_service.dart';
-import '../../services/notification_service.dart';
+
+import '../../services/global_message_listener.dart';
 
 class MassageDetailRoommateCopyModel
     extends FlutterFlowModel<MassageDetailRoommateCopyWidget> {
@@ -28,6 +28,12 @@ class MassageDetailRoommateCopyModel
 
   // 메시지 목록 (임시로 사용)
   List<Map<String, dynamic>> messages = [];
+
+  // 초기 로드 완료 여부
+  bool _isInitialLoad = true;
+
+  // 마지막으로 확인한 메시지 개수
+  int _lastMessageCount = 0;
 
   @override
   void initState(BuildContext context) {
@@ -87,14 +93,23 @@ class MassageDetailRoommateCopyModel
 
   void _initializeChatStream() {
     if (selectedRole != null && currentStudentId != null) {
+      // 초기 로드 플래그 리셋
+      _isInitialLoad = true;
+      _lastMessageCount = 0;
+
       // 학생별 채팅방 ID 생성
       String chatId = _getChatId();
 
       // 역할별 관리자 타입 매핑
-      String adminType = _getAdminType(selectedRole!);
+      String adminType = getAdminType(selectedRole!);
 
       // 채팅방 생성 또는 업데이트
       _createOrUpdateChatRoom(chatId, adminType);
+
+      // 현재 채팅방의 글로벌 리스너 일시정지 (중복 알림 방지)
+      GlobalMessageListener().pauseChatListener(chatId);
+
+      // 간단한 알림 서비스 사용
 
       // 메시지 스트림 설정 - chats 컬렉션 사용
       try {
@@ -107,57 +122,95 @@ class MassageDetailRoommateCopyModel
             .orderBy('timestamp', descending: false)
             .snapshots();
 
-        // 메시지 스트림 리스너 추가 - 관리자 메시지 수신 시 알림
+        // 메시지 스트림 리스너 추가 - 새 메시지 수신 시 간단한 알림
         chatStream?.listen(
           (snapshot) {
-            print('메시지 스트림 업데이트: ${snapshot.docs.length}개 메시지');
+            print('🔔 메시지 스트림 업데이트: ${snapshot.docs.length}개 메시지');
+
+            // 초기 로드인지 확인
+            if (_isInitialLoad) {
+              print('🔔 초기 로드 - 기존 메시지들은 알림 생략');
+              _lastMessageCount = snapshot.docs.length;
+              _isInitialLoad = false;
+              return;
+            }
+
+            // 실제로 새로운 메시지가 추가되었는지 확인
+            int currentMessageCount = snapshot.docs.length;
+            if (currentMessageCount <= _lastMessageCount) {
+              print('🔔 새로운 메시지 없음 - 알림 생략');
+              return;
+            }
+
+            print('🔔 새 메시지 감지: ${currentMessageCount - _lastMessageCount}개');
+
+            // DocumentChange를 통해 실제 새로 추가된 메시지만 처리
             for (var change in snapshot.docChanges) {
               if (change.type == DocumentChangeType.added) {
                 var messageData = change.doc.data() as Map<String, dynamic>;
+                String messageText = messageData['text'] ?? '';
+                String senderName = messageData['senderName'] ?? '알 수 없음';
+                bool isAdmin = messageData['isAdmin'] ?? false;
+                String senderId = messageData['senderId'] ?? '';
 
-                // 관리자가 보낸 메시지인지 확인
-                if (messageData['isAdmin'] == true &&
-                    messageData['senderId'] == 'admin' &&
-                    messageData['senderName'] != 'AI 어시스턴트') {
-                  // 관리자 메시지 수신 시 알림 전송
-                  _sendAdminMessageNotification(messageData);
+                print('🔔 새 메시지 상세: $messageText');
+                print(
+                    '🔔 발신자: $senderName, isAdmin: $isAdmin, senderId: $senderId');
+
+                // 자신이 보낸 메시지는 알림 제외
+                if (senderId == 'student' &&
+                    senderName == (currentUserName ?? '학생')) {
+                  print('🔔 자신이 보낸 메시지 - 알림 생략');
+                  continue;
                 }
+
+                // AI 어시스턴트 메시지는 알림 제외
+                if (senderName == 'AI 어시스턴트') {
+                  print('🔔 AI 어시스턴트 메시지 - 알림 생략');
+                  continue;
+                }
+
+                // 채팅방 내에서는 알림을 표시하지 않음 (글로벌 리스너에서 처리)
+                print('🔔 채팅방 내에서는 알림 생략 (글로벌 리스너에서 처리)');
               }
             }
+
+            // 메시지 개수 업데이트
+            _lastMessageCount = currentMessageCount;
           },
           onError: (error) {
-            print('Firestore 스트림 오류: $error');
+            print('🔔 Firestore 스트림 오류: $error');
             // 네트워크 오류 시 재시도 로직
             Future.delayed(Duration(seconds: 5), () {
-              print('Firestore 연결 재시도 중...');
+              print('🔔 Firestore 연결 재시도 중...');
               _initializeChatStream();
             });
           },
         );
 
-        print('채팅 스트림 초기화 성공: $chatId');
+        print('🔔 채팅 스트림 초기화 성공: $chatId');
       } catch (e) {
-        print('채팅 스트림 초기화 오류: $e');
+        print('🔔 채팅 스트림 초기화 오류: $e');
         // 오류 발생 시 5초 후 재시도
         Future.delayed(Duration(seconds: 5), () {
-          print('Firestore 연결 재시도 중...');
+          print('🔔 Firestore 연결 재시도 중...');
           _initializeChatStream();
         });
       }
     } else {
       print(
-          '채팅 스트림 초기화 실패: selectedRole=$selectedRole, currentStudentId=$currentStudentId');
+          '🔔 채팅 스트림 초기화 실패: selectedRole=$selectedRole, currentStudentId=$currentStudentId');
       chatStream = null;
     }
   }
 
   String _getChatId() {
     // 학생 학번과 관리자 타입으로 채팅방 ID 생성
-    String adminType = _getAdminType(selectedRole!);
+    String adminType = getAdminType(selectedRole!);
     return 'chat_${currentStudentId}_$adminType';
   }
 
-  String _getAdminType(String role) {
+  String getAdminType(String role) {
     switch (role) {
       case '실장님':
         return 'director';
@@ -233,7 +286,7 @@ class MassageDetailRoommateCopyModel
         'studentName': currentUserName ?? '학생',
         'studentId': currentStudentId ?? 'unknown',
         'participants': [currentStudentId ?? 'unknown', 'admin'],
-        'adminType': _getAdminType(selectedRole!),
+        'adminType': getAdminType(selectedRole!),
         'lastMessage': messageText,
         'lastMessageTime': FieldValue.serverTimestamp(),
         'lastMessageBy': 'student',
@@ -243,8 +296,8 @@ class MassageDetailRoommateCopyModel
 
       print('메시지 전송 성공: $messageText');
 
-      // 새 메시지 알림 전송
-      _sendNewMessageNotification(messageText);
+      // 자신이 보낸 메시지는 알림 제거 (주석 처리)
+      // _sendNewMessageNotification(messageText);
 
       // 챗봇인 경우 자동 응답
       if (selectedRole == 'chatbot') {
@@ -345,138 +398,6 @@ class MassageDetailRoommateCopyModel
     }
   }
 
-  // ChatGPT API 호출
-  Future<String> _callChatGPTAPI(String apiKey, String userMessage) async {
-    try {
-      // 시스템 메시지 설정
-      String systemMessage = '''
-당신은 기숙사 관리 AI 어시스턴트입니다. 
-학생들의 기숙사 생활과 관련된 질문에 친절하고 도움이 되는 답변을 제공해주세요.
-긴급한 상황이나 복잡한 문제의 경우 실장님, 사감님, 층장님께 직접 문의하도록 안내해주세요.
-답변은 한국어로 해주시고, 친근하고 이해하기 쉽게 설명해주세요.
-''';
-
-      final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        },
-        body: jsonEncode({
-          'model': 'gpt-3.5-turbo',
-          'messages': [
-            {'role': 'system', 'content': systemMessage},
-            {'role': 'user', 'content': userMessage},
-          ],
-          'max_tokens': 500,
-          'temperature': 0.7,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'] ??
-            '죄송합니다. 응답을 생성할 수 없습니다.';
-      } else {
-        print('ChatGPT API 오류: ${response.statusCode}');
-        return _generateChatbotResponse(userMessage);
-      }
-    } catch (e) {
-      print('ChatGPT API 호출 실패: $e');
-      return _generateChatbotResponse(userMessage);
-    }
-  }
-
-  // 새 메시지 알림 전송 (학생이 관리자에게 보낼 때)
-  void _sendNewMessageNotification(String messageText) async {
-    try {
-      // 관리자 타입 가져오기
-      String adminType = _getAdminType(selectedRole!);
-
-      // 알림 서비스를 통해 알림 전송
-      await NotificationService().sendChatNotification(
-        studentId: currentStudentId ?? 'unknown',
-        studentName: currentUserName ?? '학생',
-        message: messageText,
-        adminType: adminType,
-      );
-
-      // 로컬 알림도 표시
-      String title = '';
-      switch (adminType) {
-        case 'director':
-          title = '실장님';
-          break;
-        case 'supervisor':
-          title = '사감님';
-          break;
-        case 'floor_manager':
-          title = '층장님';
-          break;
-        default:
-          title = '관리자';
-      }
-
-      await NotificationService().showLocalNotification(
-        title: '$title에게 메시지 전송',
-        body: messageText.length > 50
-            ? '${messageText.substring(0, 50)}...'
-            : messageText,
-        payload: 'chat_${currentStudentId}_$adminType',
-      );
-
-      print('새 메시지 알림 전송 완료');
-    } catch (e) {
-      print('새 메시지 알림 전송 오류: $e');
-    }
-  }
-
-  // 관리자 메시지 수신 시 알림 전송
-  void _sendAdminMessageNotification(Map<String, dynamic> messageData) async {
-    try {
-      String messageText = messageData['text'] ?? '';
-      String adminName = messageData['senderName'] ?? '관리자';
-      String adminType = _getAdminType(selectedRole!);
-
-      // 관리자 메시지 수신 알림을 Firestore에 저장
-      await NotificationService().sendAdminMessageNotification(
-        studentId: currentStudentId ?? 'unknown',
-        studentName: currentUserName ?? '학생',
-        message: messageText,
-        adminName: adminName,
-        adminType: adminType,
-      );
-
-      // 로컬 알림 표시
-      String title = '';
-      switch (adminType) {
-        case 'director':
-          title = '실장님';
-          break;
-        case 'supervisor':
-          title = '사감님';
-          break;
-        case 'floor_manager':
-          title = '층장님';
-          break;
-        default:
-          title = '관리자';
-      }
-
-      await NotificationService().showLocalNotification(
-        title: '$title으로부터 메시지',
-        body: messageText.length > 50
-            ? '${messageText.substring(0, 50)}...'
-            : messageText,
-        payload: 'admin_chat_${currentStudentId}_$adminType',
-      );
-
-      print('관리자 메시지 알림 전송 완료');
-    } catch (e) {
-      print('관리자 메시지 알림 전송 오류: $e');
-    }
-  }
-
   // 챗봇 응답 생성 메서드
   String _generateChatbotResponse(String userMessage) {
     String message = userMessage.toLowerCase();
@@ -520,6 +441,13 @@ class MassageDetailRoommateCopyModel
 
   @override
   void dispose() {
+    // 채팅방을 나갈 때 글로벌 리스너 재시작
+    if (selectedRole != null && currentStudentId != null) {
+      String chatId = _getChatId();
+      GlobalMessageListener().resumeChatListener(chatId);
+    }
+
     messageController?.dispose();
+    print('🔔 채팅 모델 dispose');
   }
 }
