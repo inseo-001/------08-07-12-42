@@ -3,6 +3,8 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -11,6 +13,7 @@ export 'massage_detail_roommate_copy_model.dart';
 
 import '../../services/notification_service.dart';
 import '../../services/global_message_listener.dart';
+import '../../services/image_upload_service.dart';
 
 class MassageDetailRoommateCopyWidget extends StatefulWidget {
   const MassageDetailRoommateCopyWidget({super.key});
@@ -343,6 +346,7 @@ class _MassageDetailRoommateCopyWidgetState
                 'senderName': data['senderName'] ?? '',
                 'timestamp': timestamp ?? DateTime.now(),
                 'isAdmin': data['isAdmin'] ?? false,
+                'imageUrl': data['imageUrl'],
               });
             }
           }
@@ -419,6 +423,7 @@ class _MassageDetailRoommateCopyWidgetState
   Widget _buildMessageBubble(
       Map<String, dynamic> messageData, bool isMyMessage) {
     String messageText = messageData['text'] ?? '';
+    String? imageUrl = messageData['imageUrl'] as String?;
     DateTime? timestamp = messageData['timestamp'] as DateTime?;
 
     String timeString = '';
@@ -451,18 +456,28 @@ class _MassageDetailRoommateCopyWidgetState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Text(
-                        messageText,
-                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                              font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w500),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w500,
-                            ),
+                    if (imageUrl != null && imageUrl.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10.0),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text(
+                          messageText,
+                          style:
+                              FlutterFlowTheme.of(context).bodyMedium.override(
+                                    font: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w500),
+                                    letterSpacing: 0.0,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
                       ),
-                    ),
                     Padding(
                       padding: EdgeInsets.only(left: 10.0, bottom: 5.0),
                       child: Text(
@@ -495,20 +510,30 @@ class _MassageDetailRoommateCopyWidgetState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Text(
-                        messageText,
-                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                              font: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w300),
-                              color: Colors.white,
-                              fontSize: 14.0,
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w300,
-                            ),
+                    if (imageUrl != null && imageUrl.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10.0),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text(
+                          messageText,
+                          style:
+                              FlutterFlowTheme.of(context).bodyMedium.override(
+                                    font: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w300),
+                                    color: Colors.white,
+                                    fontSize: 14.0,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                        ),
                       ),
-                    ),
                     Padding(
                       padding: EdgeInsets.only(right: 10.0, bottom: 5.0),
                       child: Text(
@@ -536,6 +561,22 @@ class _MassageDetailRoommateCopyWidgetState
       padding: EdgeInsets.all(16.0),
       child: Row(
         children: [
+          // 이미지 첨부 버튼
+          Container(
+            width: 40.0,
+            height: 40.0,
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).secondaryBackground,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(color: const Color(0xFF969393)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.photo, color: Colors.black87, size: 22),
+              onPressed: _onAttachImage,
+              tooltip: '사진 첨부',
+            ),
+          ),
+          const SizedBox(width: 8.0),
           Expanded(
             child: Container(
               height: 40.0,
@@ -547,6 +588,11 @@ class _MassageDetailRoommateCopyWidgetState
               child: TextField(
                 controller: _model.messageController,
                 focusNode: _textFieldFocusNode,
+                textInputAction: TextInputAction.send,
+                keyboardType: TextInputType.text,
+                inputFormatters: [
+                  FilteringTextInputFormatter.singleLineFormatter,
+                ],
                 decoration: InputDecoration(
                   hintText: '메세지를 입력하세요',
                   hintStyle: TextStyle(
@@ -557,9 +603,11 @@ class _MassageDetailRoommateCopyWidgetState
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 ),
+                onEditingComplete: _sendMessage,
                 onSubmitted: (value) {
                   _sendMessage();
                 },
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 onTap: () {
                   // 입력 필드 터치 시 포커스 주고 스크롤 조정
                   _textFieldFocusNode.requestFocus();
@@ -597,9 +645,43 @@ class _MassageDetailRoommateCopyWidgetState
     );
   }
 
+  Future<void> _onAttachImage() async {
+    try {
+      final chatId = _model.currentStudentId == null ||
+              _model.selectedRole == null
+          ? null
+          : 'chat_${_model.currentStudentId}_${_model.getAdminType(_model.selectedRole!)}';
+      if (chatId == null) return;
+
+      // 사용자 제스처 컨텍스트 내에서 즉시 파일 선택 창을 띄우기 위해
+      // 비동기 대기 없이 서비스를 동기적으로 생성합니다.
+      final imageService = _loadImageService();
+      final String? url = await imageService.pickAndUploadChatImage(
+        chatId: chatId,
+        senderId: 'student',
+      );
+      if (url == null) return;
+      await _model.sendImageMessage(url);
+      _scrollToBottomWithKeyboard();
+    } catch (e) {
+      // 실패 무시
+    }
+  }
+
+  // 분리: 테스트 용이성을 위해 팩토리 메서드 사용
+  ImageUploadService _loadImageService() {
+    // 정적 import된 서비스를 반환
+    return ImageUploadService();
+  }
+
   void _sendMessage() {
     if (_model.messageController?.text.trim().isEmpty ?? true) {
       return;
+    }
+
+    // 웹에서 엔터 입력 시 기본 줄바꿈을 막고 전송에만 사용되도록 포커스를 해제
+    if (kIsWeb) {
+      _textFieldFocusNode.unfocus();
     }
 
     print('메시지 전송 시작');

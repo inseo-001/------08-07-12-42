@@ -333,6 +333,39 @@ class MassageDetailRoommateCopyModel
     }
   }
 
+  Future<void> sendImageMessage(String imageUrl) async {
+    try {
+      final String chatId = _getChatId();
+
+      await _firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .add({
+        'text': '',
+        'imageUrl': imageUrl,
+        'senderId': 'student',
+        'senderName': currentUserName ?? '학생',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isAdmin': false,
+      });
+
+      // 채팅방 정보 업데이트
+      await _firestore.collection('chats').doc(chatId).set({
+        'studentName': currentUserName ?? '학생',
+        'studentId': currentStudentId ?? 'unknown',
+        'participants': [currentStudentId ?? 'unknown', 'admin'],
+        'adminType': getAdminType(selectedRole!),
+        'lastMessage': '사진',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageBy': 'student',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('이미지 메시지 전송 오류: $e');
+    }
+  }
+
   void updateRole(String newRole) {
     selectedRole = newRole;
     _initializeChatStream();
