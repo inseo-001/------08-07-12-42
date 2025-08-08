@@ -118,10 +118,10 @@ class _MassageDetailRoommateCopyWidgetState
   // 스크롤을 맨 아래로 이동시키는 메서드 (reverse 모드에서는 맨 위가 최신 메시지)
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (_scrollController.hasClients && mounted) {
         _scrollController.animateTo(
           0, // reverse 모드에서는 0이 최신 메시지
-          duration: Duration(milliseconds: 200),
+          duration: Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
@@ -131,18 +131,13 @@ class _MassageDetailRoommateCopyWidgetState
   // 키보드가 올라올 때 스크롤 조정
   void _scrollToBottomWithKeyboard() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        // 키보드 높이를 고려하여 스크롤 조정
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        if (keyboardHeight > 0) {
-          _scrollController.animateTo(
-            keyboardHeight, // reverse 모드에서는 키보드 높이만큼만 스크롤
-            duration: Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-        } else {
-          _scrollToBottom();
-        }
+      if (_scrollController.hasClients && mounted) {
+        // 새로운 메시지를 확실히 보여주기 위해 항상 맨 위(최신 메시지)로 스크롤
+        _scrollController.animateTo(
+          0, // reverse 모드에서는 0이 최신 메시지
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -621,11 +616,18 @@ class _MassageDetailRoommateCopyWidgetState
       print('UI 업데이트 완료');
     });
 
-    // 입력 필드 포커스 해제
-    FocusScope.of(context).unfocus();
+    // 즉시 스크롤 (UI 업데이트 직후)
+    _scrollToBottomWithKeyboard();
 
-    // 메시지 전송 후 자연스럽게 맨 밑 대화창이 보이도록 조정
-    Future.delayed(Duration(milliseconds: 200), () {
+    // 추가 지연 후 다시 스크롤 (Firestore 업데이트 후)
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) {
+        _scrollToBottomWithKeyboard();
+      }
+    });
+
+    // 더 긴 지연 후 최종 스크롤 (확실한 스크롤 보장)
+    Future.delayed(Duration(milliseconds: 600), () {
       if (mounted) {
         _scrollToBottomWithKeyboard();
       }
