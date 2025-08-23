@@ -24,7 +24,7 @@ void main() async {
     child: MyApp(),
   ));
 }
-
+//깃허브 수정
 class MyApp extends StatefulWidget {
   // This widget is the root of your application.
   @override
